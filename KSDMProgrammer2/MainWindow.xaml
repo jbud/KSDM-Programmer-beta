@@ -196,10 +196,15 @@
                         <ColumnDefinition Width="auto"/>
                         <ColumnDefinition Width="auto"/>
                         <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
+                    <Image Grid.Column="1"
+                           Source="icon (1).ico"
+                           
+                           ></Image>
                     <TextBlock Text="KSDM Programmer"
-                       Grid.Column="1"
+                       Grid.Column="2"
                        Grid.ColumnSpan="3"
                        VerticalAlignment="Center"
                        HorizontalAlignment="Center"
@@ -207,7 +212,7 @@
                        FontWeight="Medium"
                        Foreground="#E0E0F1"/>
                     <Button x:Name="ScanBtn"
-                            Grid.Column="5"
+                            Grid.Column="6"
                             Width="30"
                             Content="↻"
                             Background="Transparent"
@@ -260,7 +265,7 @@
                             FontWeight="Medium"
                             Width="30"
                             Height="25"
-                            Grid.Column="5"
+                            Grid.Column="7"
                             Click="Minimize_Click" FontFamily="Arial">
                         <Button.Style>
                             <Style TargetType="{x:Type Button}">
@@ -307,7 +312,7 @@
                     FontWeight="Medium"
                     Width="30"
                     Height="25"
-                    Grid.Column="5"
+                    Grid.Column="7"
                     Click="Button_Click" FontFamily="Arial">
                         <Button.Style>
                             <Style TargetType="{x:Type Button}">

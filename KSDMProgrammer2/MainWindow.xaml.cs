@@ -50,6 +50,7 @@ namespace KSDMProgrammer2
         private void scan()
         {
             Debug.WriteLine("Begin Scan");
+            richTextBox1.Text = "Scanning for KSDM3, please wait...";
             string[] nameArray;
             nameArray = System.IO.Ports.SerialPort.GetPortNames();      // get a list of available ports
             string typeFound = "";
@@ -84,10 +85,15 @@ namespace KSDMProgrammer2
                 continue;
             }
             if (found)
-                richTextBox1.Text = "Found " + typeFound + " at com port: " + potential + ".";
+            {
+                richTextBox1.Text += "\n\r" + "Found " + typeFound + " at com port: " + potential + ".";
+            }
             else
-                richTextBox1.Text = "KSDM could not be automatically found, manually select a port or contact support@stinger.store";
-
+            {
+                richTextBox1.Text += "\n\r" + "KSDM could not be automatically found, manually select a port or contact support@stinger.store";
+            }
+            richTextBox1.SelectionStart = richTextBox1.Text.Length;
+            richTextBox1.ScrollToEnd();
             comboBox1.ItemsSource = nameArray;
             comboBox1.SelectedIndex = 0;
             int cindex = 0;
@@ -135,12 +141,16 @@ namespace KSDMProgrammer2
             flashBtn.IsEnabled = true;
             textBox1.Text = openFileDialog1.FileName;
             richTextBox1.Foreground = Brushes.GreenYellow;
-            richTextBox1.Text = "Ready to flash...";
+            richTextBox1.Text += "\n\r" + "Ready to flash...";
+            richTextBox1.SelectionStart = richTextBox1.Text.Length;
+            richTextBox1.ScrollToEnd();
         }
 
         private void Button_Click_2(object sender, RoutedEventArgs e)
         {
-            richTextBox1.Text = "Flashing device, please wait...";
+            richTextBox1.Text += "\n\r" + "Flashing device, please wait...";
+            richTextBox1.SelectionStart = richTextBox1.Text.Length;
+            richTextBox1.ScrollToEnd();
             Thread.Sleep(50);
             ex = new exe(comboBox1.Text, textBox1.Text);
             flashBtn.IsEnabled = false;
@@ -153,7 +163,9 @@ namespace KSDMProgrammer2
                 if (!ex.success)                                        // TODO: Add fail detection based on AVRDUDE output.
                 {
                     richTextBox1.Foreground = Brushes.Red;
-                    richTextBox1.Text = "Failed to flash KSDM3, contact support@stinger.store";
+                    richTextBox1.Text += "\n\r" + "Failed to flash KSDM3, contact support@stinger.store";
+                    richTextBox1.SelectionStart = richTextBox1.Text.Length;
+                    richTextBox1.ScrollToEnd();
 
                     return;
                 }
@@ -163,9 +175,9 @@ namespace KSDMProgrammer2
                     textBox1.Text = "";
                     openFileDialog1.FileName = "";
                     if (isRP)
-                        richTextBox1.Text = "Finished!";
+                        richTextBox1.Text += "\n\r" + "Finished!";
                     else
-                        richTextBox1.Text = ex.output;                      // show all output from AVRDUDE 
+                        richTextBox1.Text += "\n\r" + ex.output;                      // show all output from AVRDUDE 
                     richTextBox1.SelectionStart = richTextBox1.Text.Length;
                     richTextBox1.ScrollToEnd();
 
