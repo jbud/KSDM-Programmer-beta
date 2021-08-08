@@ -187,7 +187,7 @@ namespace KSDMProgrammer2
             int tries = 0;
             while(true)
             {
-                Thread.Sleep(250);
+                Thread.Sleep(150);
                 try
                 {
                     if (p.IsOpen) {
@@ -207,7 +207,7 @@ namespace KSDMProgrammer2
                 {
                     Debug.WriteLine(ex.Message);
                 }
-                if (tries >= 12) // oopsies 3 seconds is too long or wrong port
+                if (tries >= 20) // oopsies 3 seconds is too long or wrong port
                     break;
                 
                 tries++;

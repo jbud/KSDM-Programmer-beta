@@ -27,89 +27,51 @@ namespace KSDMProgrammer2
     public partial class MainWindow : Window
     {
 
-        private OpenFileDialog openFileDialog1 = new OpenFileDialog();
+        public OpenFileDialog openFileDialog1 = new OpenFileDialog();
         private exe ex;
-        private string potential;
-        System.Windows.Threading.DispatcherTimer loadTimer;
+        private static bkg bk = new bkg();
+
+        DispatcherTimer uiTick;
+        public static string ui_richTextBox_Text; // richTextBox1.Text
+        public static int ui_openFileDialog_FilterIndex; // openFileDialog1.FilterIndex
+        public static string[] ui_comboBox1_ItemsSource; // comboBox1.ItemsSource
+        public static int ui_comboBox1_SelectedIndex; // comboBox1.SelectedIndex
+
+
         public MainWindow()
         {
-            loadTimer = new System.Windows.Threading.DispatcherTimer();
-            loadTimer.Tick += new EventHandler(loadTimer_tick);
-            loadTimer.Interval = new TimeSpan(0, 0, 1);
-            loadTimer.Start();
+            uiTick = new DispatcherTimer();
+            uiTick.Tick += new EventHandler(ui_tick);
+            uiTick.Interval = new TimeSpan(0, 0, 1);
+            uiTick.Start();
+
             openFileDialog1.Filter = "Binary files (*.hex)|*.hex|UF2 Files (*.uf2)|*.uf2";
             openFileDialog1.FileOk += new CancelEventHandler(openFileDialog1_FileOk);
+            
             InitializeComponent();
-        }
-
-        private void loadTimer_tick(object sender, EventArgs e)
-        {
             scan();
-            loadTimer.Stop();
         }
-        private void scan()
+
+        private void ui_tick(object sender, EventArgs e)
         {
-            Debug.WriteLine("Begin Scan");
-            richTextBox1.Text = "Scanning for KSDM3, please wait...";
-            string[] nameArray;
-            nameArray = System.IO.Ports.SerialPort.GetPortNames();      // get a list of available ports
-            string typeFound = "";
-            bool found = false;
-            string tr;
+            comboBox1.ItemsSource = ui_comboBox1_ItemsSource;
+            richTextBox1.Text = ui_richTextBox_Text;
+            openFileDialog1.FilterIndex = ui_openFileDialog_FilterIndex;
 
-            // convoluted way to move COM1 to end of list, usually it's not what we're looking for but sometimes it can be.
-            tr = nameArray[0];
-            nameArray[0] = nameArray[nameArray.Length - 1];
-            nameArray[nameArray.Length - 1] = tr;
+            if (comboBox1.Items.Count - 1 >= ui_comboBox1_SelectedIndex)
+            {
+                comboBox1.SelectedIndex = ui_comboBox1_SelectedIndex;
+            }
 
-            foreach (string b in nameArray)
-            {
-                string temp = exe.serialPoke(b);
-                if (temp.Contains("ksdm3"))
-                {
-                    found = true;
-                    if (temp.Contains("avr"))
-                    {
-                        typeFound = "KSDM3-avr";
-                        potential = b;
-                        break;
-                    }
-                    else if (temp.Contains("rp2040"))
-                    {
-                        typeFound = "KSDM3-rp2040";
-                        openFileDialog1.FilterIndex = 2;
-                        potential = b;
-                        break;
-                    }
-                }
-                continue;
-            }
-            if (found)
-            {
-                richTextBox1.Text += "\n\r" + "Found " + typeFound + " at com port: " + potential + ".";
-            }
-            else
-            {
-                richTextBox1.Text += "\n\r" + "KSDM could not be automatically found, manually select a port or contact support@stinger.store";
-            }
             richTextBox1.SelectionStart = richTextBox1.Text.Length;
             richTextBox1.ScrollToEnd();
-            comboBox1.ItemsSource = nameArray;
-            comboBox1.SelectedIndex = 0;
-            int cindex = 0;
+        }
 
-            foreach (string prt in comboBox1.Items)
-            {
-                if (prt == potential || cindex == comboBox1.Items.Count)
-                {
-                    break;
-                }
-                cindex++;
-            }
-            if (comboBox1.Items.Count - 1 >= cindex)
-            {
-                comboBox1.SelectedIndex = cindex;
-            }
+        private void scan()
+        {
+            ScanComplete = c_ScanComplete;
+            ScanBegin = c_ScanBegin;
+            bk.Scan();
         }
         private void minimizeButton_Click(object sender, RoutedEventArgs e)
         {
@@ -141,16 +103,12 @@ namespace KSDMProgrammer2
             flashBtn.IsEnabled = true;
             textBox1.Text = openFileDialog1.FileName;
             richTextBox1.Foreground = Brushes.GreenYellow;
-            richTextBox1.Text += "\n\r" + "Ready to flash...";
-            richTextBox1.SelectionStart = richTextBox1.Text.Length;
-            richTextBox1.ScrollToEnd();
+            ui_richTextBox_Text += "\n\r" + "Ready to flash...";
         }
 
         private void Button_Click_2(object sender, RoutedEventArgs e)
         {
-            richTextBox1.Text += "\n\r" + "Flashing device, please wait...";
-            richTextBox1.SelectionStart = richTextBox1.Text.Length;
-            richTextBox1.ScrollToEnd();
+            ui_richTextBox_Text += "\n\r" + "Flashing device, please wait...";
             Thread.Sleep(50);
             ex = new exe(comboBox1.Text, textBox1.Text);
             flashBtn.IsEnabled = false;
@@ -163,9 +121,7 @@ namespace KSDMProgrammer2
                 if (!ex.success)                                        // TODO: Add fail detection based on AVRDUDE output.
                 {
                     richTextBox1.Foreground = Brushes.Red;
-                    richTextBox1.Text += "\n\r" + "Failed to flash KSDM3, contact support@stinger.store";
-                    richTextBox1.SelectionStart = richTextBox1.Text.Length;
-                    richTextBox1.ScrollToEnd();
+                    ui_richTextBox_Text += "\n\r" + "Failed to flash KSDM3, contact support@stinger.store";
 
                     return;
                 }
@@ -175,11 +131,9 @@ namespace KSDMProgrammer2
                     textBox1.Text = "";
                     openFileDialog1.FileName = "";
                     if (isRP)
-                        richTextBox1.Text += "\n\r" + "Finished!";
+                        ui_richTextBox_Text += "\n\r" + "Finished!";
                     else
-                        richTextBox1.Text += "\n\r" + ex.output;                      // show all output from AVRDUDE 
-                    richTextBox1.SelectionStart = richTextBox1.Text.Length;
-                    richTextBox1.ScrollToEnd();
+                        ui_richTextBox_Text += "\n\r" + ex.output;  
 
                     return;
                 }
@@ -198,5 +152,43 @@ namespace KSDMProgrammer2
         {
             scan();
         }
+        public static void c_ScanComplete(object sender, EventArgs e)
+        {
+            
+            if (bk.found)
+            {
+                ui_richTextBox_Text += "\n\r" + "Found KSDM3-" + KSDM3.cpu + " at com port: " + KSDM3.port + ".";
+            }
+            else
+            {
+                ui_richTextBox_Text += "\n\r" + "KSDM could not be automatically found, manually select a port or contact support@stinger.store";
+            }
+            if (KSDM3.cpu == "rp2040")
+                ui_openFileDialog_FilterIndex = 2;
+
+
+            ui_comboBox1_ItemsSource = bk.nameArray;
+            ui_comboBox1_SelectedIndex = 0;
+
+            int cindex = 0;
+
+            foreach (string prt in bk.nameArray)
+            {
+                if (prt == bk.potential || cindex > bk.nameArray.Length)
+                {
+                    break;
+                }
+                cindex++;
+            }
+            ui_comboBox1_SelectedIndex = cindex;
+        }
+        
+        public static void c_ScanBegin(object sender, EventArgs e)
+        {
+            ui_richTextBox_Text = "Scanning Ports Please Wait...";
+            
+        }
+        public static EventHandler ScanComplete;
+        public static EventHandler ScanBegin;
     }
 }

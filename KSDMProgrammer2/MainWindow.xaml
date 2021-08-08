@@ -200,9 +200,8 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Image Grid.Column="1"
-                           Source="icon (1).ico"
-                           
-                           ></Image>
+                           Source="pack://application:,,,/icon (1).ico"
+                           HorizontalAlignment="Center"></Image>
                     <TextBlock Text="KSDM Programmer"
                        Grid.Column="2"
                        Grid.ColumnSpan="3"
@@ -372,7 +371,7 @@
                              Width="350"
                              Foreground="WhiteSmoke"
                              Background="#262f3b" Opacity="0.8"
-                             BorderThickness="0" />
+                             BorderThickness="0"/>
                 </Border>
             </Grid>
             <Grid Grid.Row="2" Grid.Column="4">
@@ -490,7 +489,8 @@
                              BorderThickness="0"
                              Padding="0"
                              Margin="5" 
-                             TextWrapping="WrapWithOverflow">
+                             TextWrapping="WrapWithOverflow"
+                             IsReadOnly="True">
 
                     </TextBox>
                 </Border>
