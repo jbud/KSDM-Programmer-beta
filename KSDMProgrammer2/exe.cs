@@ -169,7 +169,7 @@ namespace KSDMProgrammer2
                 p.RtsEnable = true; // RP2040 type KSDM3 require RTS/DTR = true, this reboots AVR type so we sleep below.
                 p.DtrEnable = true;
                 p.Open();
-                Thread.Sleep(3000); // AVR type KSDM3 reboot with this serial config, but will still open the port, give a few seconds to boot.
+                Thread.Sleep(1500); // AVR type KSDM3 reboot with this serial config, but will still open the port, give a few seconds to boot.
                 while (true)
                 {
                     if (p.IsOpen)

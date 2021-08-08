@@ -165,6 +165,8 @@ namespace KSDMProgrammer2
             }
             if (KSDM3.cpu == "rp2040")
                 ui_openFileDialog_FilterIndex = 2;
+            else
+                ui_openFileDialog_FilterIndex = 1;
 
 
             ui_comboBox1_ItemsSource = bk.nameArray;
