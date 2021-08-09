@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Ports;
 using System.Reflection;
-using System.Management;
 
 namespace KSDMProgrammer2
 {
@@ -19,11 +15,7 @@ namespace KSDMProgrammer2
         private List<string> tempFiles = new List<string>();
         private string exePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),"ksdm-temp\\");
         private string avrdude;
-        
-        // public static stuff
-        public static string type;
-        public static string fport;
-        
+                
         // public object stuff
         public bool success;
         public bool done;
@@ -207,7 +199,7 @@ namespace KSDMProgrammer2
                 {
                     Debug.WriteLine(ex.Message);
                 }
-                if (tries >= 20) // oopsies 3 seconds is too long or wrong port
+                if (tries >= 20)
                     break;
                 
                 tries++;

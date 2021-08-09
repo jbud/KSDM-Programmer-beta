@@ -1,21 +1,14 @@
 ﻿using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
+using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using System.Windows.Media.Animation;
 using System.Windows.Threading;
 
 namespace KSDMProgrammer2
@@ -27,6 +20,66 @@ namespace KSDMProgrammer2
     public partial class MainWindow : Window
     {
 
+        [DllImport("user32.dll", EntryPoint = "SetWindowLong")]
+        private static extern int SetWindowLong32(HandleRef hWnd, int nIndex, int dwNewLong);
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
+        private static extern IntPtr SetWindowLongPtr64(HandleRef hWnd, int nIndex, IntPtr dwNewLong);
+
+        public IntPtr myHWND;
+        public const int GWL_STYLE = -16;
+
+        public static class WS
+        {
+            public static readonly long
+            WS_BORDER = 0x00800000L,
+            WS_CAPTION = 0x00C00000L,
+            WS_CHILD = 0x40000000L,
+            WS_CHILDWINDOW = 0x40000000L,
+            WS_CLIPCHILDREN = 0x02000000L,
+            WS_CLIPSIBLINGS = 0x04000000L,
+            WS_DISABLED = 0x08000000L,
+            WS_DLGFRAME = 0x00400000L,
+            WS_GROUP = 0x00020000L,
+            WS_HSCROLL = 0x00100000L,
+            WS_ICONIC = 0x20000000L,
+            WS_MAXIMIZE = 0x01000000L,
+            WS_MAXIMIZEBOX = 0x00010000L,
+            WS_MINIMIZE = 0x20000000L,
+            WS_MINIMIZEBOX = 0x00020000L,
+            WS_OVERLAPPED = 0x00000000L,
+            WS_OVERLAPPEDWINDOW = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
+            WS_POPUP = 0x80000000L,
+            WS_POPUPWINDOW = WS_POPUP | WS_BORDER | WS_SYSMENU,
+            WS_SIZEBOX = 0x00040000L,
+            WS_SYSMENU = 0x00080000L,
+            WS_TABSTOP = 0x00010000L,
+            WS_THICKFRAME = 0x00040000L,
+            WS_TILED = 0x00000000L,
+            WS_TILEDWINDOW = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
+            WS_VISIBLE = 0x10000000L,
+            WS_VSCROLL = 0x00200000L;
+        }
+
+        public static IntPtr SetWindowLongPtr(HandleRef hWnd, int nIndex, IntPtr dwNewLong)
+        {
+            if (IntPtr.Size == 8)
+            {
+                return SetWindowLongPtr64(hWnd, nIndex, dwNewLong);
+            }
+            else
+            {
+                return new IntPtr(SetWindowLong32(hWnd, nIndex, dwNewLong.ToInt32()));
+            }
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            myHWND = new WindowInteropHelper(this).Handle;
+            IntPtr myStyle = new IntPtr(WS.WS_CAPTION | WS.WS_CLIPCHILDREN | WS.WS_MINIMIZEBOX | WS.WS_MAXIMIZEBOX | WS.WS_SYSMENU | WS.WS_SIZEBOX);
+            SetWindowLongPtr(new HandleRef(null, myHWND), GWL_STYLE, myStyle);
+        }
+
         public OpenFileDialog openFileDialog1 = new OpenFileDialog();
         private exe ex;
         private static bkg bk = new bkg();
@@ -36,6 +89,7 @@ namespace KSDMProgrammer2
         public static int ui_openFileDialog_FilterIndex; // openFileDialog1.FilterIndex
         public static string[] ui_comboBox1_ItemsSource; // comboBox1.ItemsSource
         public static int ui_comboBox1_SelectedIndex; // comboBox1.SelectedIndex
+        private static bool ui_lockout = true;
 
 
         public MainWindow()
@@ -54,29 +108,31 @@ namespace KSDMProgrammer2
 
         private void ui_tick(object sender, EventArgs e)
         {
-            comboBox1.ItemsSource = ui_comboBox1_ItemsSource;
+            
             richTextBox1.Text = ui_richTextBox_Text;
             openFileDialog1.FilterIndex = ui_openFileDialog_FilterIndex;
-
-            if (comboBox1.Items.Count - 1 >= ui_comboBox1_SelectedIndex)
+            if (!ui_lockout)
             {
-                comboBox1.SelectedIndex = ui_comboBox1_SelectedIndex;
+                comboBox1.ItemsSource = ui_comboBox1_ItemsSource;
+                if (comboBox1.Items.Count - 1 >= ui_comboBox1_SelectedIndex)
+                {
+                    comboBox1.SelectedIndex = ui_comboBox1_SelectedIndex;
+                }
+                ui_lockout = true;
             }
-
             richTextBox1.SelectionStart = richTextBox1.Text.Length;
             richTextBox1.ScrollToEnd();
         }
 
         private void scan()
         {
-            ScanComplete = c_ScanComplete;
-            ScanBegin = c_ScanBegin;
+            ScanComplete += new EventHandler(c_ScanComplete);
+            ScanBegin += new EventHandler(c_ScanBegin);
             bk.Scan();
         }
         private void minimizeButton_Click(object sender, RoutedEventArgs e)
         {
-            WindowStyle = WindowStyle.SingleBorderWindow;
-            WindowState = WindowState.Minimized;
+            SystemCommands.MinimizeWindow(this);
         }
         private void Grid_MouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -88,9 +144,15 @@ namespace KSDMProgrammer2
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            Debug.WriteLine("clicked");
-            Application.Current.Shutdown();
+            Storyboard sb = this.FindResource("closeSB") as Storyboard;
+            Storyboard.SetTarget(sb, this);
+            sb.Completed += Sb_Completed;
+            sb.Begin();
+        }
 
+        private void Sb_Completed(object sender, EventArgs e)
+        {
+            SystemCommands.CloseWindow(this);
         }
 
         private void button_Click_1(object sender, RoutedEventArgs e)
@@ -176,19 +238,20 @@ namespace KSDMProgrammer2
 
             foreach (string prt in bk.nameArray)
             {
-                if (prt == bk.potential || cindex > bk.nameArray.Length)
+                if (prt == KSDM3.port || cindex > bk.nameArray.Length)
                 {
                     break;
                 }
                 cindex++;
             }
             ui_comboBox1_SelectedIndex = cindex;
+            ui_lockout = false;
         }
         
         public static void c_ScanBegin(object sender, EventArgs e)
         {
             ui_richTextBox_Text = "Scanning Ports Please Wait...";
-            
+            ui_lockout = false;
         }
         public static EventHandler ScanComplete;
         public static EventHandler ScanBegin;

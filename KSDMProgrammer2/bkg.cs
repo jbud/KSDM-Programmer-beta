@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace KSDMProgrammer2
 {
@@ -14,11 +10,20 @@ namespace KSDMProgrammer2
         public bool found;
         public string typeFound = "";
         public string[] nameArray;
+        public delegate void Function();
+
         public void Scan()
         {
             t_scan();
         }
         
+        public void t_method(Function call)
+        {
+            Task.Run(()=> {
+                call();
+            });
+        }
+
         private void t_scan()
         {
             Task.Run(() =>
@@ -31,10 +36,12 @@ namespace KSDMProgrammer2
                 string tr;
 
                 // convoluted way to move COM1 to end of list, usually it's not what we're looking for but sometimes it can be.
-                tr = nameArray[0];
-                nameArray[0] = nameArray[nameArray.Length - 1];
-                nameArray[nameArray.Length - 1] = tr;
-
+                if (nameArray.Length > 1)
+                {
+                    tr = nameArray[0];
+                    nameArray[0] = nameArray[nameArray.Length - 1];
+                    nameArray[nameArray.Length - 1] = tr;
+                }
                 foreach (string b in nameArray)
                 {
                     string temp = exe.serialPoke(b);
@@ -43,14 +50,22 @@ namespace KSDMProgrammer2
                         found = true;
                         if (temp.Contains("avr"))
                         {
-                            typeFound = "KSDM3-avr";
+                            if (temp.Contains("sportplus"))
+                                KSDM3.submodel = "sp";
+                            else
+                                KSDM3.submodel = "3";
+
                             KSDM3.cpu = "avr";
                             potential = b;
                             break;
                         }
                         else if (temp.Contains("rp2040"))
                         {
-                            typeFound = "KSDM3-rp2040";
+                            if (temp.Contains("sportplus"))
+                                KSDM3.submodel = "sp";
+                            else
+                                KSDM3.submodel = "3";
+
                             KSDM3.cpu = "rp2040";
                             potential = b;
                             break;
@@ -59,8 +74,6 @@ namespace KSDMProgrammer2
                     continue;
                 }
                 KSDM3.port = potential;
-                KSDM3.submodel = "not implemented."; // TODO: Detect submodels for firmware matching...
-                
 
                 onComplete(new EventArgs());
             });
@@ -82,6 +95,5 @@ namespace KSDMProgrammer2
         public static string cpu;
         public static string submodel;
         public static string port;
-
     }
 }
