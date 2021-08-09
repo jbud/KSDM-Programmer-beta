@@ -383,7 +383,8 @@
                              Width="350"
                              Foreground="WhiteSmoke"
                              Background="#262f3b" Opacity="0.8"
-                             BorderThickness="0"/>
+                             BorderThickness="0"
+                             GotFocus="textBox1_GotFocus"/>
                 </Border>
             </Grid>
             <Grid Grid.Row="2" Grid.Column="4">
