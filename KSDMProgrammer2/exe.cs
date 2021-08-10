@@ -22,6 +22,9 @@ namespace KSDMProgrammer2
         public string output;
         public static string response;
 
+        public static int k3 = 256; //74
+        public static int ksp = 277; //7P
+
         private bool spawnProc(string filename, string arguments, bool events, bool readFromProc = true)
         {
             Process t = new Process();
@@ -208,6 +211,48 @@ namespace KSDMProgrammer2
             return r;
         }
 
+        public static bool subTypeCheck(String filename, String subtype)
+        {
+            try
+            {
+                int compare = -1;
+                int r = 0;
+                String number = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                int baseN = number.Length;
+                String BNS;
+                int pTo, pFrom;
+            
+                pFrom = filename.IndexOf("--") + "--".Length;
+                if (filename.Contains(".uf2"))
+                    pTo = filename.LastIndexOf(".uf2");
+                else
+                    pTo = filename.IndexOf(".hex");
+                BNS = filename.Substring(pFrom, pTo - pFrom);
+
+                for (int i = BNS.Length - 1; i >= 0; i--)
+                {
+                    char c = BNS[BNS.Length - 1 - i];
+                    int f = number.IndexOf(c);
+                    r += f * (int)Math.Floor(Math.Pow(baseN, i));
+                }
+
+                switch (subtype)
+                {
+                    case "3":
+                        compare = k3;
+                        break;
+                    case "sportplus":
+                        compare = ksp;
+                        break;
+                }
+                return compare == r;
+            }
+            catch (Exception e)
+            { 
+                Debug.WriteLine(e.Message);
+                return false;
+            }
+        }
         public exe(string p, string i)
         {
             port = p;

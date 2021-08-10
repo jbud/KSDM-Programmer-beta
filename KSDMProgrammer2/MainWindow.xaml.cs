@@ -118,7 +118,34 @@ namespace KSDMProgrammer2
             flashBtn.IsEnabled = true;
             textBox1.Text = openFileDialog1.FileName;
             richTextBox1.Foreground = Brushes.GreenYellow;
-            ui_richTextBox_Text += "\n\r" + "Ready to flash...";
+            bool typever = false;
+            if (bk.found)
+            {
+                Debug.WriteLine("found");
+                if (KSDM3.cpu == "avr")
+                {
+                    if (openFileDialog1.FileName.Contains(".hex"))
+                    {
+                        Debug.WriteLine("typever=true"); 
+                        typever = true;
+                    }
+                }
+                else if (KSDM3.cpu == "rp2040")
+                {
+                    if (openFileDialog1.FileName.Contains(".uf2"))
+                    {
+                        Debug.WriteLine("typever=true");
+                        typever = true;
+                    }
+                }
+
+                if (exe.subTypeCheck(openFileDialog1.FileName, KSDM3.submodel) && typever)
+                    ui_richTextBox_Text += "\n\r" + "File verified! Ready to flash...";
+                else
+                    ui_richTextBox_Text += "\n\r" + "Warning: File NOT verified! Ready to flash...";
+            }
+            else
+                ui_richTextBox_Text += "\n\r" + "Warning: File NOT verified! Ready to flash...";
         }
 
         private void Button_Click_2(object sender, RoutedEventArgs e)
