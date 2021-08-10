@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace KSDMProgrammer2
 {
-    public class bkg : EventArgs
+    public class Bkg : EventArgs
     {
         public string potential;
         public bool found;
@@ -14,37 +14,34 @@ namespace KSDMProgrammer2
 
         public void Scan()
         {
-            t_scan();
+            TaskScan();
         }
-        
-        public void t_method(Function call)
+
+        public void TaskMethod(Function call)
         {
-            Task.Run(()=> {
+            _ = Task.Run(() =>
+            {
                 call();
             });
         }
 
-        private void t_scan()
+        private void TaskScan()
         {
-            Task.Run(() =>
+            _ = Task.Run(() =>
             {
-                onBegin(new EventArgs());
+                OnBegin(new EventArgs());
                 Debug.WriteLine("Begin Scan");
 
                 nameArray = System.IO.Ports.SerialPort.GetPortNames();      // get a list of available ports
                 found = false;
-                string tr;
 
-                // convoluted way to move COM1 to end of list, usually it's not what we're looking for but sometimes it can be.
                 if (nameArray.Length > 1)
                 {
-                    tr = nameArray[0];
-                    nameArray[0] = nameArray[nameArray.Length - 1];
-                    nameArray[nameArray.Length - 1] = tr;
+                    nameArray = Helper.Swap(nameArray, 0, nameArray.Length - 1);
                 }
                 foreach (string b in nameArray)
                 {
-                    string temp = exe.serialPoke(b);
+                    string temp = Exe.SerialPoke(b);
                     if (temp.Contains("ksdm3"))
                     {
                         found = true;
@@ -75,25 +72,18 @@ namespace KSDMProgrammer2
                 }
                 KSDM3.port = potential;
 
-                onComplete(new EventArgs());
+                OnComplete(new EventArgs());
             });
         }
 
-        protected virtual void onBegin(EventArgs e)
+        protected virtual void OnBegin(EventArgs e)
         {
             MainWindow.ScanBegin?.Invoke(this, e);
         }
-        protected virtual void onComplete(EventArgs e)
+        protected virtual void OnComplete(EventArgs e)
         {
             MainWindow.ScanComplete?.Invoke(this, e);
         }
-        
     }
-
-    public static class KSDM3
-    {
-        public static string cpu;
-        public static string submodel;
-        public static string port;
-    }
+    
 }

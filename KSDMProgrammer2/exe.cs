@@ -8,24 +8,21 @@ using System.Reflection;
 
 namespace KSDMProgrammer2
 {
-    internal class exe
+    internal class Exe
     {
         private string port;
         private string input;
-        private List<string> tempFiles = new List<string>();
-        private string exePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),"ksdm-temp\\");
         private string avrdude;
-                
+        private List<string> tempFiles = new List<string>();
+        private readonly string exePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),"ksdm-temp\\");
+        
         // public object stuff
         public bool success;
         public bool done;
         public string output;
         public static string response;
 
-        public static int k3 = 256; //74
-        public static int ksp = 277; //7P
-
-        private bool spawnProc(string filename, string arguments, bool events, bool readFromProc = true)
+        private bool SpawnProc(string filename, string arguments, bool events, bool readFromProc = true)
         {
             Process t = new Process();
             t.StartInfo.FileName = filename;
@@ -36,11 +33,11 @@ namespace KSDMProgrammer2
             t.StartInfo.RedirectStandardError = true;
             t.EnableRaisingEvents = events;
             if (events)
-                t.Exited += new EventHandler(p_Exited);
+                t.Exited += new EventHandler(P_Exited);
 
             try
             {
-                t.Start();
+                _ = t.Start();
             }
             catch (Exception ex)
             {
@@ -56,10 +53,10 @@ namespace KSDMProgrammer2
             return true;
         }
 
-        private bool flashRP2040()
+        private bool FlashRP2040()
         {
 
-            bool procStatus = spawnProc("cmd.exe", "/K Mode " + port + " baud=1200", false, false);
+            bool procStatus = SpawnProc("cmd.exe", "/K Mode " + port + " baud=1200", false, false);
             if (procStatus)
             {
                 Thread.Sleep(2000);                            // wait for windows to discover the Drive
@@ -90,14 +87,14 @@ namespace KSDMProgrammer2
             else 
                 return false;
         }
-        private bool flashAVR()
+        private bool FlashAVR()
         {
-            extractIncludes();
-            bool procStatus = spawnProc(avrdude, " -c arduino -p m328p -P " + port + " -b 57600 -e -u -D -U flash:w:" + input + ":i", true, true);
+            ExtractIncludes();
+            bool procStatus = SpawnProc(avrdude, " -c arduino -p m328p -P " + port + " -b 57600 -e -u -D -U flash:w:" + input + ":i", true, true);
 
             if (procStatus)
             {
-                deleteExtractedFiles();
+                DeleteExtractedFiles();
                 if (output.Contains("verified"))
                     return true;
                 else
@@ -105,18 +102,18 @@ namespace KSDMProgrammer2
             }
             else
             {
-                deleteExtractedFiles();
+                DeleteExtractedFiles();
                 return false;
             }
         }
                 
-        private void p_Exited(object sender, EventArgs e)
+        private void P_Exited(object sender, EventArgs e)
         {
             done = true;
         }
-        private void extractIncludes()
+        private void ExtractIncludes()
         {
-            bool procStatus = spawnProc("cmd.exe", "/K mkdir " + exePath, false, false);
+            bool procStatus = SpawnProc("cmd.exe", "/K mkdir " + exePath, false, false);
             
             if (procStatus) { 
                 Assembly asm = Assembly.GetExecutingAssembly();
@@ -141,14 +138,14 @@ namespace KSDMProgrammer2
                 }
             }
         }
-        private void deleteExtractedFiles()
+        private void DeleteExtractedFiles()
         {
             foreach (string f in tempFiles)
             {
                 File.Delete(exePath + f);
             }
         }
-        public static string serialPoke(string pport)
+        public static string SerialPoke(string pport)
         {
             string r = "failed";
             
@@ -173,7 +170,7 @@ namespace KSDMProgrammer2
                         break;
                     }
                 }
-            } 
+            }
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
@@ -204,63 +201,38 @@ namespace KSDMProgrammer2
                 }
                 if (tries >= 20)
                     break;
-                
+
                 tries++;
             }
             p.Close();
             return r;
         }
 
-        public static bool subTypeCheck(String filename, String subtype)
+        public static bool SubTypeCheck(string filename, string subtype)
         {
-            try
-            {
-                int compare = -1;
-                int r = 0;
-                String number = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-                int baseN = number.Length;
-                String BNS;
-                int pTo, pFrom;
-            
-                pFrom = filename.IndexOf("--") + "--".Length;
-                if (filename.Contains(".uf2"))
-                    pTo = filename.LastIndexOf(".uf2");
-                else
-                    pTo = filename.IndexOf(".hex");
-                BNS = filename.Substring(pFrom, pTo - pFrom);
+            string fileHash;
+            fileHash = Helper.getFileExtension(filename) == "uf2" ? Helper.getStringBetween(filename, "--", ".uf2") : Helper.getStringBetween(filename, "--", ".hex");
 
-                for (int i = BNS.Length - 1; i >= 0; i--)
-                {
-                    char c = BNS[BNS.Length - 1 - i];
-                    int f = number.IndexOf(c);
-                    r += f * (int)Math.Floor(Math.Pow(baseN, i));
-                }
-
-                switch (subtype)
-                {
-                    case "3":
-                        compare = k3;
-                        break;
-                    case "sportplus":
-                        compare = ksp;
-                        break;
-                }
-                return compare == r;
-            }
-            catch (Exception e)
-            { 
-                Debug.WriteLine(e.Message);
+            if (fileHash == null)
                 return false;
+
+            int decrypted = Helper.Base36Decode(fileHash);
+            
+            switch (subtype)
+            {
+                case "3":
+                    return KSDM3.submodels.Base == decrypted;
+                case "sportplus":
+                    return KSDM3.submodels.SportPlus == decrypted;
+                default:
+                    return false;
             }
         }
-        public exe(string p, string i)
+        public Exe(string p, string i)
         {
             port = p;
             input = i;
-            if (input.Contains(".uf2"))
-                success = flashRP2040();
-            else
-                success = flashAVR();
+            success = Helper.getFileExtension(input) == "uf2" ? FlashRP2040() : FlashAVR();
         }
     }
 }

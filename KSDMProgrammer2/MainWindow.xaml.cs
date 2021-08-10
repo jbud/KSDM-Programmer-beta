@@ -29,20 +29,18 @@ namespace KSDMProgrammer2
         public IntPtr myHWND;
         public const int GWL_STYLE = -16;
 
-        
+        private Exe ex;
+        private static Bkg bk = new Bkg();
+        private DispatcherTimer uiTick;
+        private static bool ui_lockout = true;
 
         public OpenFileDialog openFileDialog1 = new OpenFileDialog();
-        private exe ex;
-        private static bkg bk = new bkg();
-        public static EventHandler ScanComplete;
-        public static EventHandler ScanBegin;
-
-        DispatcherTimer uiTick;
         public static string ui_richTextBox_Text; // richTextBox1.Text
         public static int ui_openFileDialog_FilterIndex; // openFileDialog1.FilterIndex
         public static string[] ui_comboBox1_ItemsSource; // comboBox1.ItemsSource
         public static int ui_comboBox1_SelectedIndex; // comboBox1.SelectedIndex
-        private static bool ui_lockout = true;
+        public static EventHandler ScanComplete;
+        public static EventHandler ScanBegin;
 
 
         public MainWindow()
@@ -56,7 +54,7 @@ namespace KSDMProgrammer2
             openFileDialog1.FileOk += new CancelEventHandler(openFileDialog1_FileOk);
             
             InitializeComponent();
-            scan();
+            Scan();
         }
 
         private void ui_tick(object sender, EventArgs e)
@@ -77,7 +75,7 @@ namespace KSDMProgrammer2
             richTextBox1.ScrollToEnd();
         }
 
-        private void scan()
+        private void Scan()
         {
             ScanComplete += new EventHandler(c_ScanComplete);
             ScanBegin += new EventHandler(c_ScanBegin);
@@ -97,7 +95,7 @@ namespace KSDMProgrammer2
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            Storyboard sb = this.FindResource("closeSB") as Storyboard;
+            Storyboard sb = FindResource("closeSB") as Storyboard;
             Storyboard.SetTarget(sb, this);
             sb.Completed += Sb_Completed;
             sb.Begin();
@@ -110,7 +108,7 @@ namespace KSDMProgrammer2
 
         private void button_Click_1(object sender, RoutedEventArgs e)
         {
-            openFileDialog1.ShowDialog();
+            _ = openFileDialog1.ShowDialog();
         }
         private void openFileDialog1_FileOk(object sender, CancelEventArgs e) 
         {
@@ -124,7 +122,7 @@ namespace KSDMProgrammer2
                 Debug.WriteLine("found");
                 if (KSDM3.cpu == "avr")
                 {
-                    if (openFileDialog1.FileName.Contains(".hex"))
+                    if (Helper.getFileExtension(openFileDialog1.FileName) == "hex")
                     {
                         Debug.WriteLine("typever=true"); 
                         typever = true;
@@ -132,14 +130,14 @@ namespace KSDMProgrammer2
                 }
                 else if (KSDM3.cpu == "rp2040")
                 {
-                    if (openFileDialog1.FileName.Contains(".uf2"))
+                    if (Helper.getFileExtension(openFileDialog1.FileName) == "uf2")
                     {
                         Debug.WriteLine("typever=true");
                         typever = true;
                     }
                 }
 
-                if (exe.subTypeCheck(openFileDialog1.FileName, KSDM3.submodel) && typever)
+                if (Exe.SubTypeCheck(openFileDialog1.FileName, KSDM3.submodel) && typever)
                     ui_richTextBox_Text += "\n\r" + "File verified! Ready to flash...";
                 else
                     ui_richTextBox_Text += "\n\r" + "Warning: File NOT verified! Ready to flash...";
@@ -152,11 +150,11 @@ namespace KSDMProgrammer2
         {
             ui_richTextBox_Text += "\n\r" + "Flashing device, please wait...";
             Thread.Sleep(50);
-            ex = new exe(comboBox1.Text, textBox1.Text);
+            ex = new Exe(comboBox1.Text, textBox1.Text);
             flashBtn.IsEnabled = false;
-            loopy();
+            WaitLoop();
         }
-        private void loopy()
+        private void WaitLoop()
         {
             while (true)
             {
@@ -169,13 +167,13 @@ namespace KSDMProgrammer2
                 }
                 else if (ex.done)
                 {
-                    bool isRP = textBox1.Text.Contains("uf2");
+                    bool isRP = Helper.getFileExtension(openFileDialog1.FileName) == "uf2";
                     textBox1.Text = "";
                     openFileDialog1.FileName = "";
                     if (isRP)
                         ui_richTextBox_Text += "\n\r" + "Finished!";
                     else
-                        ui_richTextBox_Text += "\n\r" + ex.output;  
+                        ui_richTextBox_Text += "\n\r" + ex.output;
 
                     return;
                 }
@@ -187,12 +185,12 @@ namespace KSDMProgrammer2
         }
         private void Minimize_Click(object sender, RoutedEventArgs e)
         {
-            this.WindowState = WindowState.Minimized;
+            WindowState = WindowState.Minimized;
         }
 
         private void ScanBtn_Click(object sender, RoutedEventArgs e)
         {
-            scan();
+            Scan();
         }
         public static void c_ScanComplete(object sender, EventArgs e)
         {
