@@ -1,15 +1,22 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
+using System.IO.Ports;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace KSDMProgrammer2
 {
+
+    
     public class Bkg : EventArgs
     {
+        private static readonly string pth = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ksdm-temp\\");
         public string potential;
         public bool found;
         public string typeFound = "";
         public string[] nameArray;
+        public static SerialPort p;
         public delegate void Function();
 
         public void Scan()
@@ -17,7 +24,7 @@ namespace KSDMProgrammer2
             TaskScan();
         }
 
-        public void TaskMethod(Function call)
+        public static void TaskMethod(Function call)
         {
             _ = Task.Run(() =>
             {
@@ -74,6 +81,53 @@ namespace KSDMProgrammer2
 
                 OnComplete(new EventArgs());
             });
+        }
+
+        public static void getDebugLog(string port)
+        {
+            if (KSDM3.cpu == "rp2040") { 
+                p = new SerialPort();
+                p.PortName = port;
+                p.BaudRate = 115200;
+                p.Parity = Parity.None;
+                p.StopBits = StopBits.One;
+                p.Handshake = Handshake.XOnXOff;
+                p.RtsEnable = true;
+                p.DtrEnable = true;
+                p.ReadTimeout = 5000;
+                TaskMethod(SerialDoTask);
+            }
+        }
+
+        public static void SerialDoTask()
+        {
+            string response;
+            p.Open();
+            while (true)
+            {
+                if (p.IsOpen)
+                {
+                    p.WriteLine("dl");
+                    break;
+                }
+            }
+            while (true)
+            {
+                Thread.Sleep(150);
+                if (p.IsOpen)
+                {
+                    response = "";
+                    if (p.BytesToRead > 0)
+                        response = p.ReadExisting();
+
+                    if (response.Contains("#eof"))
+                    {
+                        p.Close();
+                        break;
+                    }
+                }
+            }
+            File.WriteAllText(pth + "KSDMLogFile.log", response);
         }
 
         protected virtual void OnBegin(EventArgs e)

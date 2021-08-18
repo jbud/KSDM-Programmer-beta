@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32;
 using System;
+using System.IO;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -34,6 +35,8 @@ namespace KSDMProgrammer2
         private DispatcherTimer uiTick;
         private static bool ui_lockout = true;
 
+        public SaveFileDialog dlg = new SaveFileDialog();
+
         public OpenFileDialog openFileDialog1 = new OpenFileDialog();
         public static string ui_richTextBox_Text; // richTextBox1.Text
         public static int ui_openFileDialog_FilterIndex; // openFileDialog1.FilterIndex
@@ -42,6 +45,10 @@ namespace KSDMProgrammer2
         public static EventHandler ScanComplete;
         public static EventHandler ScanBegin;
 
+        private bool scanningLogs = false;
+        private readonly string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ksdm-temp\\");
+        private readonly string logFileName = "KSDMLogFile.log";
+
 
         public MainWindow()
         {
@@ -49,6 +56,13 @@ namespace KSDMProgrammer2
             uiTick.Tick += new EventHandler(ui_tick);
             uiTick.Interval = new TimeSpan(0, 0, 1);
             uiTick.Start();
+            DateTime date = DateTime.Today;
+
+
+
+            dlg.FileName = "KSDM3-Debug-Log_" + date.ToString("MM-dd-yy");
+            dlg.DefaultExt = ".log";
+            dlg.Filter = "Text documents (.log)|*.log";
 
             openFileDialog1.Filter = "Binary files (*.hex)|*.hex|UF2 Files (*.uf2)|*.uf2";
             openFileDialog1.FileOk += new CancelEventHandler(openFileDialog1_FileOk);
@@ -59,7 +73,18 @@ namespace KSDMProgrammer2
 
         private void ui_tick(object sender, EventArgs e)
         {
-            
+            if (scanningLogs)
+            {
+                if (File.Exists(path+logFileName)) {
+                    if (dlg.ShowDialog() == true)
+                    {
+                        File.Copy(path+logFileName, dlg.FileName, true);
+                        File.Delete(path+logFileName);
+                        scanningLogs = false;
+                        ui_richTextBox_Text += "\n\r Log saved...";
+                    }
+                }
+            }
             richTextBox1.Text = ui_richTextBox_Text;
             openFileDialog1.FilterIndex = ui_openFileDialog_FilterIndex;
             if (!ui_lockout)
@@ -289,5 +314,19 @@ namespace KSDMProgrammer2
             SetWindowLongPtr(new HandleRef(null, myHWND), GWL_STYLE, myStyle);
         }
         #endregion
+
+        private void DBG_Click(object sender, RoutedEventArgs e)
+        {
+            if (bk.found && KSDM3.cpu == "rp2040")
+            {
+                ui_richTextBox_Text += "\n\r" + "Scanning device for logs please wait...";
+                scanningLogs = true;
+                Bkg.getDebugLog(comboBox1.Text);
+            } 
+            else
+            {
+                ui_richTextBox_Text += "\n\r" + "Cannot scan this device for logs...";
+            }
+        }
     }
 }

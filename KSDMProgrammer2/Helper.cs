@@ -89,11 +89,11 @@ namespace KSDMProgrammer2
 
         }
 
-        private static readonly string base36Alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        private static readonly string BaseNAlphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"; // Base36
 
-        public static string Base36Encode(int n)
+        public static string BaseNEncode(int n)
         {
-            int BaseN = base36Alphabet.Length;
+            int BaseN = BaseNAlphabet.Length;
             string v = "";
             bool isNeg = false;
 
@@ -107,26 +107,26 @@ namespace KSDMProgrammer2
             {
                 int i = n % BaseN;
                 n /= BaseN;
-                v = base36Alphabet[i] + v;
+                v = BaseNAlphabet[i] + v;
             } 
             while (n != 0);
 
             return isNeg ? "-" + v : v;
         }
-        public static int Base36Decode(string b36)
+        public static int BaseNDecode(string bN)
         {
             bool isNeg = false;
-            if (b36[0] == '-')
+            if (bN[0] == '-')
             {
-                b36 = b36.Substring(1);
+                bN = bN.Substring(1);
                 isNeg = true;
             }
             int decrypted = 0;
-            int BaseN = base36Alphabet.Length;
-            for (int i = b36.Length - 1; i >= 0; i--)
+            int BaseN = BaseNAlphabet.Length;
+            for (int i = bN.Length - 1; i >= 0; i--)
             {
-                char c = b36[b36.Length - 1 - i];
-                int f = base36Alphabet.IndexOf(c);
+                char c = bN[bN.Length - 1 - i];
+                int f = BaseNAlphabet.IndexOf(c);
                 decrypted += f * (int)Math.Floor(Math.Pow(BaseN, i));
             }
 

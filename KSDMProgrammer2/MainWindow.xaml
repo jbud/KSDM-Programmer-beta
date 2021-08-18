@@ -440,6 +440,51 @@
                        VerticalAlignment="Center" 
                         FontSize="12"
                        Foreground="#E0E0F1" />
+                <Button x:Name="DBG"
+                            Width="50"
+                            Height="22"
+                            Content="Save Log"
+                            Background="#21354F"
+                            Foreground="#E0E0F1"
+                            HorizontalAlignment="Left" Margin="0,0,0,0"
+                            BorderThickness="0"
+                            Click="DBG_Click"
+                            FontSize="10">
+                    <Button.Style>
+                        <Style TargetType="{x:Type Button}">
+                            <Setter Property="Content" Value="–"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="{x:Type Button}">
+                                        <Border Name="Border"
+                                        CornerRadius="4" 
+                                        Padding="0,0,0,0"
+                                        Background="#21354F"
+                                        BorderThickness="0"
+                                        
+                                        Cursor="Hand" Margin="0,0,0,0">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0"  Content="{TemplateBinding Content}" />
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Border" Property="Background" Value="#2C476B">
+
+                                                </Setter>
+                                            </Trigger>
+                                            <Trigger Property="IsDefaulted" Value="True">
+                                                <Setter TargetName="Border" Property="Background" Value="#21354F">
+
+                                                </Setter>
+                                            </Trigger>
+
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+
+                        </Style>
+                    </Button.Style>
+                </Button>
             </Grid>
             <Grid Grid.Row="3" Grid.Column="3">
                 <ComboBox x:Name="comboBox1" HorizontalAlignment="Left" VerticalAlignment="Center" Width="119" Height="22" />

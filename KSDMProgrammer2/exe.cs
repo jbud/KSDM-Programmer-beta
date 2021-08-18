@@ -216,7 +216,7 @@ namespace KSDMProgrammer2
             if (fileHash == null)
                 return false;
 
-            int decrypted = Helper.Base36Decode(fileHash);
+            int decrypted = Helper.BaseNDecode(fileHash);
             
             switch (subtype)
             {
