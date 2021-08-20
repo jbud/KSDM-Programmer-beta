@@ -101,7 +101,7 @@ namespace KSDMProgrammer2
 
         public static void SerialDoTask()
         {
-            string response;
+            string response = "";
             p.Open();
             while (true)
             {
@@ -116,11 +116,11 @@ namespace KSDMProgrammer2
                 Thread.Sleep(150);
                 if (p.IsOpen)
                 {
-                    response = "";
+                    //response = "";
                     if (p.BytesToRead > 0)
-                        response = p.ReadExisting();
+                        response += p.ReadExisting();
 
-                    if (response.Contains("#eof"))
+                    if (response.Contains("#eol"))
                     {
                         p.Close();
                         break;
